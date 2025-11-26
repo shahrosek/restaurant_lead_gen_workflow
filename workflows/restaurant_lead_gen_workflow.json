@@ -1,0 +1,2180 @@
+{
+  "name": "Restaurant Lead Generation Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d30372fd-30cf-4a46-8d07-6686a4bb8af3",
+              "name": "delay_per_request_s",
+              "value": "={{ $('Get Configurations').all().find(item => item.json.Key === 'delay_per_request_s').json.Value }}",
+              "type": "number"
+            },
+            {
+              "id": "d8f9064b-e5e2-49ed-853b-4c2bd2ef83b1",
+              "name": "rep_a_email",
+              "value": "={{ $('Get Configurations').all().find(item => item.json.Key === 'rep_a_email').json.Value }}",
+              "type": "string"
+            },
+            {
+              "id": "07debe48-7ec9-49ad-917a-22c583ee450b",
+              "name": "rep_b_email",
+              "value": "={{ $('Get Configurations').all().find(item => item.json.Key === 'rep_b_email').json.Value }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1328,
+        1664
+      ],
+      "id": "176fd3f6-a1a4-45f6-b25b-0d5ca596b3bd",
+      "name": "Set Configurations",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "app78Oobw1JRhb0Rh",
+          "mode": "list",
+          "cachedResultName": "Restaurant Lead Generation Base",
+          "cachedResultUrl": "https://airtable.com/app78Oobw1JRhb0Rh"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblyV50RKBlPq0xtd",
+          "mode": "list",
+          "cachedResultName": "Configs",
+          "cachedResultUrl": "https://airtable.com/app78Oobw1JRhb0Rh/tblyV50RKBlPq0xtd"
+        },
+        "returnAll": false,
+        "options": {
+          "fields": [
+            "Value",
+            "Key"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -1520,
+        1664
+      ],
+      "id": "733faad0-03f8-4052-805e-f33d84be699c",
+      "name": "Get Configurations",
+      "retryOnFail": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ebbf5fd7-716e-45d8-9924-63780943ab4e",
+              "leftValue": "={{ $json.fields.Status.toLowerCase() }}",
+              "rightValue": "to do",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "32b8a5c1-b05f-4860-9627-f66696b792ae",
+              "leftValue": "={{ $json.fields.Location }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        -1728,
+        1664
+      ],
+      "id": "84230541-e108-44af-9166-53c215edf140",
+      "name": "Filter Invalid Records"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "data = _('Filter Invalid Records').all()\n\nresult = []\n\nfor item in data:\n  record = item['json'].to_py()\n  \n  record_id = record['id']\n  complete_record = record['fields']\n  \n  result.append({\n    'location': complete_record['Location'],\n    'status': complete_record['Status'],\n    'min_rating': complete_record['Minimum Rating'],\n    'record_id': record_id,\n  })\n\nreturn result"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1120,
+        1664
+      ],
+      "id": "07150f04-d549-408a-9962-016f74a2a1d4",
+      "name": "Get Location Input Values"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "authentication": "airtableTokenApi",
+        "baseId": {
+          "__rl": true,
+          "value": "app78Oobw1JRhb0Rh",
+          "mode": "id"
+        },
+        "tableId": {
+          "__rl": true,
+          "value": "tblrObIWm2ZxUOyoJ",
+          "mode": "id"
+        },
+        "triggerField": "Last Updated",
+        "additionalFields": {
+          "fields": "Last Updated,Minimum Rating,Status,Location",
+          "viewId": "viwn6qEwebKmvIRtP"
+        }
+      },
+      "type": "n8n-nodes-base.airtableTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1936,
+        1664
+      ],
+      "id": "0ef5da61-ec69-4243-9499-f2d74a00ba5e",
+      "name": "Airtable Trigger"
+    },
+    {
+      "parameters": {
+        "content": "### **Zone 1: Trigger & Input**\n\n**Purpose:** This zone initiates the workflow. It watches Airtable for new requests and prepares the initial data for processing.\n\n---\n**Node Descriptions:**\n\n* **Airtable Trigger:** Polls a specific Airtable view (\"Ready to Process\") for new or updated records to start the workflow.\n* **Filter Invalid Records:** (Filter) A simple assertion to validate the records caught by the Airtable Trigger Node.\n* **Get Config Data:** Fetches configuration settings (like Rate Limit Delays and Sales Rep Email Addresses) from the \"Config\" table in Airtable.\n* **Set Configurations:** Structures the config data so it can be easily accessed by other nodes in the workflow.\n* **Get Location Input Values:** Structures the Airtable Trigger data and prepares it to be processed sequentially. ",
+        "height": 624,
+        "width": 1024,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2000,
+        1248
+      ],
+      "typeVersion": 1,
+      "id": "864cef6c-eee8-4719-96a0-a6515a9fd37f",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "### **Zone 2: Data Sourcing (Google Places API -> Search Text Endpoint)**\n\n**Purpose:** This zone is responsible for fetching the maximum number of organic restaurant leads from the Google Places API for the given location, handling the API's pagination limits.\n\n---\n**Node Descriptions:**\n\n* **Process each location sequentially:** (Split in Batches) Ensures that if multiple locations are triggered at once, each one is processed individually from start to finish.\n* **Get Place IDs for Location:** (HTTP Request) This node is responsible for getting the 60 most relevant places listed on for the text location query.\n* **Update Status -> Processing:** (Airtable Update Record) In case of Success, this node updates the Status of the Location query record in Inputs table.\n* **Update Status -> Failed:** (Airtable Update Record) In case of Failure, this node updates the Status of the Location query record in the Input table.\n* **Places ID Response Validation -> Locations:** (Python Code Node) This node validates the response of Places API endpoint HTTP Request node\n* **Prepare Places ID, Location structured data:** (Edit Set) Prepares the data in a Structured format with each Location associated with its place_id and the record id of the Location record in Inputs table.",
+        "height": 960,
+        "width": 1152,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -912,
+        1072
+      ],
+      "typeVersion": 1,
+      "id": "ff50675a-6930-48e6-9003-852cd2202b47",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -832,
+        1664
+      ],
+      "id": "f2a6432f-da64-4e27-bb0b-d6abc6b6bd63",
+      "name": "Process Location Sequentially"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://places.googleapis.com/v1/places:searchText",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Goog-FieldMask",
+              "value": "places.id,nextPageToken"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"textQuery\": \"{{ $json.location }}\",\n  \"includedType\": \"restaurant\",\n  \"minRating\": {{ $json.minimum_rating || 4.0 }}\n}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          },
+          "pagination": {
+            "pagination": {
+              "parameters": {
+                "parameters": [
+                  {
+                    "type": "body",
+                    "name": "pageToken",
+                    "value": "={{ $response.body.nextPageToken }}"
+                  }
+                ]
+              },
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{ $response.body.nextPageToken == null }}",
+              "requestInterval": 2000
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -608,
+        1776
+      ],
+      "id": "b88c11b9-8f29-4c55-b331-511df9d80190",
+      "name": "Get Places IDs for Location",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "app78Oobw1JRhb0Rh",
+          "mode": "list",
+          "cachedResultName": "Restaurant Lead Generation Base",
+          "cachedResultUrl": "https://airtable.com/app78Oobw1JRhb0Rh"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblrObIWm2ZxUOyoJ",
+          "mode": "list",
+          "cachedResultName": "Inputs",
+          "cachedResultUrl": "https://airtable.com/app78Oobw1JRhb0Rh/tblrObIWm2ZxUOyoJ"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status": "In Progress",
+            "id": "={{ $('Process Location Sequentially').first().json.record_id }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Minimum Rating (Stars)",
+              "displayName": "Minimum Rating (Stars)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Completed",
+                  "value": "Completed"
+                },
+                {
+                  "name": "In Progress",
+                  "value": "In Progress"
+                },
+                {
+                  "name": "To Do",
+                  "value": "To Do"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Created At",
+              "displayName": "Created At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Last Updated",
+              "displayName": "Last Updated",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Find Leads",
+              "displayName": "Find Leads",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Minimum Rating",
+              "displayName": "Minimum Rating",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Qualified Leads",
+              "displayName": "Qualified Leads",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Error Logs",
+              "displayName": "Error Logs",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -336,
+        1616
+      ],
+      "id": "fee73177-58e8-4341-ba57-cbe64a173d19",
+      "name": "Update Status -> Processing"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "app78Oobw1JRhb0Rh",
+          "mode": "list",
+          "cachedResultName": "Restaurant Lead Generation Base",
+          "cachedResultUrl": "https://airtable.com/app78Oobw1JRhb0Rh"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblrObIWm2ZxUOyoJ",
+          "mode": "list",
+          "cachedResultName": "Inputs",
+          "cachedResultUrl": "https://airtable.com/app78Oobw1JRhb0Rh/tblrObIWm2ZxUOyoJ"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status": "Failed",
+            "id": "={{ $('Process Location Sequentially').first().json.record_id }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Minimum Rating (Stars)",
+              "displayName": "Minimum Rating (Stars)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Completed",
+                  "value": "Completed"
+                },
+                {
+                  "name": "In Progress",
+                  "value": "In Progress"
+                },
+                {
+                  "name": "To Do",
+                  "value": "To Do"
+                },
+                {
+                  "name": "Failed",
+                  "value": "Failed"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Created At",
+              "displayName": "Created At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Last Updated",
+              "displayName": "Last Updated",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Find Leads",
+              "displayName": "Find Leads",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Minimum Rating",
+              "displayName": "Minimum Rating",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Qualified Leads",
+              "displayName": "Qualified Leads",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Error Logs",
+              "displayName": "Error Logs",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -336,
+        1792
+      ],
+      "id": "c900c864-4b6f-4ea6-bb6d-74939b5f8619",
+      "name": "Update Status -> Failed"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "all_responses = _('Get Places IDs for Location').all()\n\nunique_place_ids = set()\n\noutput_items = []\n\nfor item in all_responses:\n\n  response_data = item.get('json', {}).to_py()\n  response_body = response_data.get('body', {})\n\n  if 'error' in response_body:\n    continue\n  \n  places_list = response_body.get('places', [])\n\n  for place in places_list:\n    place_id = place.get('id')\n        \n    if place_id:\n      unique_place_ids.add(place_id)\n\nfor pid in unique_place_ids:\n  output_items.append({'json': {'place_id': pid}})\n\nreturn output_items"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        1616
+      ],
+      "id": "53d04edd-e422-458a-87bf-eae12811456b",
+      "name": "Places ID Response Validation",
+      "alwaysOutputData": true,
+      "executeOnce": false,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "969e3d5d-7b38-4dbd-a333-8a8f2765e18d",
+              "name": "place_id",
+              "value": "={{ $json.place_id }}",
+              "type": "string"
+            },
+            {
+              "id": "df128cbf-0549-41a5-9e4f-497b6de69987",
+              "name": "location_record_id",
+              "value": "={{ $('Process Location Sequentially').first().json.record_id }}",
+              "type": "string"
+            },
+            {
+              "id": "fb224245-ead7-4c54-9326-687a488c0d13",
+              "name": "location",
+              "value": "={{ $('Process Location Sequentially').first().json.location }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        48,
+        1792
+      ],
+      "id": "45931c58-66a9-48d7-a09e-004b9b8fc339",
+      "name": "Prepare Places ID, Location structured data"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        384,
+        1456
+      ],
+      "id": "85f3f1c9-f9ad-4d47-b3af-ee4e8e869121",
+      "name": "Process Place ID Sequentially"
+    },
+    {
+      "parameters": {
+        "amount": "=1.2"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        1728
+      ],
+      "id": "9b7eda17-bcce-4922-a328-239b66e6f655",
+      "name": "Wait for Places Details Endpoint",
+      "webhookId": "f07b6793-c21f-4b8f-950a-149e6d0f0e67"
+    },
+    {
+      "parameters": {
+        "url": "=https://places.googleapis.com/v1/places/{{ $('Process Place ID Sequentially').first().json.place_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Goog-FieldMask",
+              "value": "=displayName,formattedAddress,internationalPhoneNumber,websiteUri,rating,userRatingCount,businessStatus,location,id"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        736,
+        1728
+      ],
+      "id": "41aa4214-6ee1-48f5-9e66-546231746550",
+      "name": "Get Place Details Complete",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.keys().includes('websiteUri') && $json.body.websiteUri != '' }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    },
+                    "id": "86df9863-54dc-428f-895e-4559dec0288e"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Found"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "b4314bdd-1536-4b25-9161-335d375aab68",
+                    "leftValue": "={{ $json.body.keys().includes('websiteUri') && $json.body.websiteUri != '' }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "false",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Not Found"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        944,
+        1584
+      ],
+      "id": "5d988902-ac28-49b1-a4a6-9fa61a2aca8b",
+      "name": "Check if Web URL found"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "import re\nimport json\n\ndata = _('Get Place Details Complete').all()[0]['json']['error'].to_py()\n\ndef extract_error_message(error_string):\n    \n  if not error_string or not isinstance(error_string, str):\n    return error_string\n\n  try:\n    \n    json_match = re.search(r\"\\{.*\\}\", error_string)\n    \n    if json_match:\n      \n      json_str = json_match.group(0)\n      json_str = json_str.replace('\\\\\"', '\"')\n      \n      parsed_json = json.loads(json_str)\n\n      for key in [\"domain\", \"error\", \"message\", \"name\", \"email\"]:\n        \n        if key in parsed_json:\n          \n          if isinstance(parsed_json[key], list) and parsed_json[key]:\n            return parsed_json[key][0]\n          elif isinstance(parsed_json[key], str):\n            return parsed_json[key]\n  \n  except (json.JSONDecodeError, AttributeError):\n    pass\n\n  patterns = [\n    r'\\[\"([^\"]+)\"\\]',\n    r':\\s*\"([^\"]+)\"',\n    r'-\\s*([^\"]+)',\n  ]\n\n  for pattern in patterns:\n    \n    match = re.search(pattern, error_string)\n    \n    if match:\n      message = match.group(1).strip()\n      \n      if message and len(message) > 5:\n        return message\n\n  quote_matches = re.findall(r'\"([^\"]*)\"', error_string)\n  \n  if quote_matches:\n    last_quoted = quote_matches[-1]\n    \n    if last_quoted and len(last_quoted) > 5:\n      return last_quoted\n\n  cleaned = re.sub(r\"^\\d+\\s*-\\s*\", \"\", error_string)\n  cleaned = re.sub(r\"^[A-Z_]+\\s*:\\s*\", \"\", cleaned)\n  cleaned = re.sub(r'\\\\n|\\\\\"', \"\", cleaned)\n  cleaned = cleaned.strip(\"\\\"' \")\n\n  if cleaned and len(cleaned) > 5 and cleaned != error_string:\n    return cleaned\n\n  return error_string\n\nerror_msg = extract_error_message(data['message'])\nstatus = data['status']\n\nreturn [{'error_msg': error_msg, 'status': status}]\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        944,
+        1824
+      ],
+      "id": "b5e15152-a756-42eb-a84c-b0eb3925eabc",
+      "name": "Parse Error Response Places Details"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a488f7b2-69fa-4966-b809-e102265cbf98",
+              "name": "timestamp",
+              "value": "={{ $now.toFormat('MM-dd-yyyy HH:mm:ss') }}",
+              "type": "string"
+            },
+            {
+              "id": "36126299-be71-4bb1-8a2d-0045a28f8e79",
+              "name": "workflow_name",
+              "value": "={{ $workflow.name }}",
+              "type": "string"
+            },
+            {
+              "id": "0b02d28e-9d2f-4cde-8455-c38e029d6c35",
+              "name": "execution_id",
+              "value": "={{ $execution.id }}",
+              "type": "string"
+            },
+            {
+              "id": "d56fa464-cb1b-4716-aa89-e8a1c4db96f1",
+              "name": "failed_node",
+              "value": "=Get Place Details Complete (Google Places Details Endpoint)",
+              "type": "string"
+            },
+            {
+              "id": "e56b1bde-3614-44d7-b1b7-cd4cd8298b4d",
+              "name": "error_msg",
+              "value": "={{ $json.error_msg }}",
+              "type": "string"
+            },
+            {
+              "id": "1e4b1fcc-f1a6-4475-a1d3-b813e8e64fe4",
+              "name": "status_code",
+              "value": "={{ $json.status }}",
+              "type": "string"
+            },
+            {
+              "id": "d4ea6303-146f-4553-9521-0e4f4895148f",
+              "name": "note",
+              "value": "=The system couldn't find details for this specific restaurant record. The search for '{{ $('Process Place ID Sequentially').first().json.location }}' continued, but this single lead was skipped and not added to the qualified list.",
+              "type": "string"
+            },
+            {
+              "id": "0c692a28-0eea-4344-b66a-f2499977b67e",
+              "name": "input",
+              "value": "={{ [$('Process Place ID Sequentially').first().json.location_record_id ]}}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1328,
+        1824
+      ],
+      "id": "124464ab-d907-4d8a-893b-1d14602787c9",
+      "name": "Save Error Logs Places Details Response"
+    },
+    {
+      "parameters": {
+        "method": "HEAD",
+        "url": "={{ $('Get Place Details Complete').first().json.body.websiteUri }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1136,
+        1456
+      ],
+      "id": "1c4e66de-1cc9-4698-bcf4-312bb88b3b4d",
+      "name": "Is Website Operational?",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "import re\nfrom datetime import datetime, timedelta\n\nlocation_data = _('Process Place ID Sequentially').all()[0]['json']\nplace_details_data = _('Get Place Details Complete').all()[0]['json']['body']\n\ndef sanitize_and_format_phone(phone_number_string):\n   \n  if not phone_number_string or phone_number_string == 'N/A':\n    return 'N/A'\n\n  clean_number = re.sub(r'[^\\d+]', '', phone_number_string)\n\n  digits = re.findall(r'\\d', clean_number)\n  \n  if len(digits) >= 10:\n    return clean_number\n  else:\n    return 'Invalid Format'\n\ndef flatten_json(y):\n  out = {}\n\n  def flatten(x, name=''):\n    \n    if type(x) is dict:\n      \n      for a in x:\n        flatten(x[a], name + a + '_')\n    \n    elif type(x) is list:\n      i = 0\n    \n      for a in x:\n        flatten(a, name + str(i) + '_')\n        i += 1\n    \n    else:\n      out[name[:-1]] = x\n\n  flatten(y)\n  \n  return out\n\ndef get_website_status(network_response_item):\n  flat_response = flatten_json(network_response_item)\n  \n  status_code = None\n  possible_keys = ['statusCode', 'status', 'status_code', 'code']\n  \n  for key in possible_keys:\n    \n    if key in flat_response:\n      \n      value_str = str(flat_response[key])\n  \n      if value_str.isdigit() and len(value_str) == 3:\n        status_code = int(value_str)\n        break\n        \n  if status_code is not None and 200 <= status_code < 400:\n    return 'Live'\n  else:\n    return 'Offline'        \n\ndef process_lead(place_details):\n  \n  final_lead = \n  {\n    'restaurant_name': place_details.get('displayName', {}).get('text', 'N/A'),\n    'phone_number': place_details.get('internationalPhoneNumber', 'N/A'),\n    'website': place_details.get('websiteUri', 'N/A'),\n    'full_address': place_details.get('formattedAddress', 'N/A'),\n    'google_rating': place_details.get('rating'),\n    'review_count': place_details.get('userRatingCount'),\n    'business_status': place_details.get('businessStatus', 'UNKNOWN'),\n    'place_id': place_details.get('id', 'N/A'),\n    'latitude': place_details.get('location', {}).get('latitude'),\n    'longitude': place_details.get('location', {}).get('longitude'),\n  }\n\n  final_lead['phone_number'] = sanitize_and_format_phone(final_lead.get('phone_number', 'N/A'))\n  \n  raw_score = 0\n  rating = final_lead.get('google_rating')\n  reviews = final_lead.get('review_count')\n\n  if rating is not None and reviews is not None:\n    raw_score = rating * reviews\n    \n  max_possible_score = 20000.0\n  lead_score = 0\n  \n  if raw_score > 0:\n    lead_score = (raw_score / max_possible_score) * 100\n  \n    if lead_score > 100:\n      lead_score = 100\n            \n  final_lead['lead_score'] = round(lead_score)\n\n  tier_justification = \"\"\n  \n  if final_lead['business_status'] != 'OPERATIONAL':\n    lead_tier = 'Review'\n    tier_justification = f\"Business status is '{final_lead['business_status']}'.\"\n  \n  elif not rating or not reviews or reviews < 50:\n    lead_tier = 'Review'\n    tier_justification = \"Low review count or missing rating.\"\n  \n  elif final_lead['lead_score'] > 80:\n    lead_tier = 'Hot Lead'\n    tier_justification = \"Excellent rating and very high review volume.\"\n  \n  elif final_lead['lead_score'] > 50:\n    lead_tier = 'Qualified'\n    tier_justification = \"Good rating and high review volume.\"\n  \n  else:\n    lead_tier = 'Monitor'\n    tier_justification = \"Operational but has a moderate quality score.\"\n\n  final_lead['lead_tier'] = lead_tier\n  \n  final_lead['tier_justification'] = tier_justification\n\n  assigned_rep_object = None\n  \n  longitude = final_lead.get('longitude')\n  \n  full_address = final_lead.get('full_address', '')\n  \n  rep_name_string = \"N/A\"\n  \n  if longitude is not None:\n    division_longitude = -98.0\n  \n    if longitude >= division_longitude:\n      rep_name_string = \"Rep A (East)\"\n    else:\n      rep_name_string = \"Rep B (West)\"\n\n  elif full_address:\n    \n    west_states = [\"WA\", \"OR\", \"CA\", \"NV\", \"ID\", \"MT\", \"WY\", \"UT\", \"CO\", \"AZ\", \"NM\", \"AK\", \"HI\"]\n    midwest_states = [\"ND\", \"SD\", \"NE\", \"KS\", \"MN\", \"IA\", \"MO\", \"WI\", \"IL\", \"IN\", \"MI\", \"OH\"]\n    \n    rep_b_states = west_states + midwest_states\n\n    state_match = re.search(r'\\b([A-Z]{2})\\b', full_address)\n    \n    if state_match:\n      state_code = state_match.group(1)\n    \n      if state_code in rep_b_states:\n        rep_name_string = \"Rep B (West)\"\n      else:\n        rep_name_string = \"Rep A (East)\"\n  \n  if rep_name_string == \"N/A\":\n    rep_name_string = \"Unassigned (Requires Review)\"\n  \n  final_lead['assigned_rep'] = rep_name_string\n\n  final_lead['lead_source'] = 'Google Places API'\n  final_lead['inputs_link'] = [location_data['location_record_id']]\n  final_lead['location'] = location_data['location']\n  \n  return final_lead\n\nfinal_lead_data = process_lead(place_details_data)\n\nif final_lead_data['website'] != 'N/A':\n  web_head_req_response = _('Is Website Operational?').all()[0]['json'].to_py()\n\n  final_lead_data['website_status'] = get_website_status(web_head_req_response)\n\nreturn [{'json': final_lead_data}]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1328,
+        1600
+      ],
+      "id": "6336ced9-f727-4b0b-a9dd-46ee5b12217c",
+      "name": "Construct Enriched Structure"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "738a8ca0-635f-48cf-9611-a5b0bdbfa82c",
+              "name": "restaurant_name",
+              "value": "={{ $json.restaurant_name }}",
+              "type": "string"
+            },
+            {
+              "id": "14c0c6af-b6ad-4dab-a7a9-659a98f9df95",
+              "name": "phone_number",
+              "value": "={{ $json.phone_number }}",
+              "type": "string"
+            },
+            {
+              "id": "27e9bc91-3120-4ddb-aac5-2863aec24ba9",
+              "name": "website",
+              "value": "={{ $json.website }}",
+              "type": "string"
+            },
+            {
+              "id": "ec7dd527-7849-4348-b57c-6040cf02cf62",
+              "name": "full_address",
+              "value": "={{ $json.full_address }}",
+              "type": "string"
+            },
+            {
+              "id": "937e1e39-2aee-4d10-a8c4-b2abb563faad",
+              "name": "google_rating",
+              "value": "={{ $json.google_rating }}",
+              "type": "number"
+            },
+            {
+              "id": "5fe4a256-8840-4e29-9eca-97392c36dcc1",
+              "name": "review_count",
+              "value": "={{ $json.review_count }}",
+              "type": "number"
+            },
+            {
+              "id": "c1a80241-c784-450d-abc1-be0cf09d8319",
+              "name": "business_status",
+              "value": "={{ $json.business_status }}",
+              "type": "string"
+            },
+            {
+              "id": "e40ffe4a-3096-426a-b603-67d47494e0c5",
+              "name": "place_id",
+              "value": "={{ $json.place_id }}",
+              "type": "string"
+            },
+            {
+              "id": "92d62661-5423-4348-92af-259733681d0b",
+              "name": "latitude",
+              "value": "={{ $json.latitude }}",
+              "type": "string"
+            },
+            {
+              "id": "fe1ef514-1eb7-446b-8186-760242a89b1a",
+              "name": "longitude",
+              "value": "={{ $json.longitude }}",
+              "type": "string"
+            },
+            {
+              "id": "fa74ed99-c47d-4b26-b3cf-4186b9748b99",
+              "name": "lead_tier",
+              "value": "={{ $json.lead_tier }}",
+              "type": "string"
+            },
+            {
+              "id": "f904816a-c1b4-4cbe-8df1-0e56a435d1bc",
+              "name": "tier_justification",
+              "value": "={{ $json.tier_justification }}",
+              "type": "string"
+            },
+            {
+              "id": "62858665-42e7-4bad-8530-981530be673b",
+              "name": "assigned_rep",
+              "value": "={{ $json.assigned_rep }}",
+              "type": "string"
+            },
+            {
+              "id": "363ecb5d-b50b-4e56-864e-04e3cf7af829",
+              "name": "lead_source",
+              "value": "={{ $json.lead_source }}",
+              "type": "string"
+            },
+            {
+              "id": "ae723bdb-eac0-4df1-9937-058125f7953b",
+              "name": "website_status",
+              "value": "={{ $json.website_status }}",
+              "type": "string"
+            },
+            {
+              "id": "2b18811e-4105-4cac-a704-765d37ac2d1c",
+              "name": "location_record_id",
+              "value": "={{ $json.inputsLink.toJsonString() }}",
+              "type": "array"
+            },
+            {
+              "id": "69aeb340-3e12-49df-8dc3-46d9bed9416f",
+              "name": "lead_score",
+              "value": "={{ $json.lead_score }}",
+              "type": "number"
+            },
+            {
+              "id": "c867dc89-3eef-4d4a-aa38-f666df108572",
+              "name": "location",
+              "value": "={{ $json.location }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1552,
+        1824
+      ],
+      "id": "c4d7169c-12a9-43b5-8243-764002f14478",
+      "name": "Save Structured Restaurant Objects"
+    },
+    {
+      "parameters": {
+        "content": "### **Zone 3: Lead Enrichment & Scoring**\n\n**Purpose:** This is the core processing engine of the workflow. It takes each raw Place ID, enriches it with detailed information, and runs a comprehensive script to validate, score, and qualify it as a sales lead.\n\n---\n**Node Descriptions:**\n\n* **Process Place ID Sequentially:** (Split in Batches) Iterates through the list of Place Objects (ID, Location, Location Record ID) processing each restaurant one by one.\n* **Wait for Places Details Endpoint:** (Wait) Loads Config object value for dynamic rate limit delays.\n* **Get Place Details Complete:** Makes an API call to the Google `Place Details` endpoint to get rich data for the specific restaurant.\n* **Check if Web URL found:** (Switch) Check if the Places Details response for a restaurant contained website URL.\n* **Is Website Operational?:** Performs a quick `HEAD` request to the restaurant's website to verify it is live and operational (if website found).\n* **Construct Enriched Structure:** (Code Node) The \"brain\" of the workflow. This Python script validates all data, calculates a 0-100 `Lead Score`, assigns a `Lead Tier` with justification, and assigns a sales rep using a robust fallback logic.",
+        "height": 1232,
+        "width": 1472,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        304,
+        864
+      ],
+      "typeVersion": 1,
+      "id": "0898d388-dbc3-4f27-a2b8-a7f0babe6337",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "app78Oobw1JRhb0Rh",
+          "mode": "list",
+          "cachedResultName": "Restaurant Lead Generation Base",
+          "cachedResultUrl": "https://airtable.com/app78Oobw1JRhb0Rh"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblQ9EJxhRWTjpMgF",
+          "mode": "list",
+          "cachedResultName": "Error Logs",
+          "cachedResultUrl": "https://airtable.com/app78Oobw1JRhb0Rh/tblQ9EJxhRWTjpMgF"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Execution ID": "={{ $json.execution_id }}",
+            "Workflow Name": "={{ $json.workflow_name }}",
+            "Failed Node": "={{ $json.failed_node }}",
+            "Error Message": "={{ $json.error_msg }}",
+            "Status Code": "={{ $json.status_code }}",
+            "Note": "={{ $json.note }}",
+            "Inputs": "={{ $json.location_record_id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Execution ID",
+              "displayName": "Execution ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Workflow Name",
+              "displayName": "Workflow Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Failed Node",
+              "displayName": "Failed Node",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Error Message",
+              "displayName": "Error Message",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status Code",
+              "displayName": "Status Code",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Note",
+              "displayName": "Note",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Created At",
+              "displayName": "Created At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Inputs",
+              "displayName": "Inputs",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        2080,
+        1376
+      ],
+      "id": "8409f312-67f3-4821-a47f-a17f1b0ebc42",
+      "name": "Append Error Logs "
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "base": {
+          "__rl": true,
+          "value": "app78Oobw1JRhb0Rh",
+          "mode": "list",
+          "cachedResultName": "Restaurant Lead Generation Base",
+          "cachedResultUrl": "https://airtable.com/app78Oobw1JRhb0Rh"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbluol4yG3oVyN4LM",
+          "mode": "list",
+          "cachedResultName": "Qualified Leads",
+          "cachedResultUrl": "https://airtable.com/app78Oobw1JRhb0Rh/tbluol4yG3oVyN4LM"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Google Place ID": "={{ $json.place_id }}",
+            "Restaurant Name": "={{ $json.restaurant_name }}",
+            "Full Address": "={{ $json.full_address }}",
+            "Phone Number": "={{ $json.phone_number }}",
+            "Website": "={{ $json.website }}",
+            "Google Rating": "={{ $json.google_rating }}",
+            "Review Count": "={{ $json.review_count }}",
+            "Longitude": "={{ $json.longitude }}",
+            "Latitude": "={{ $json.latitude }}",
+            "Assigned Rep": "={{ $json.assigned_rep }}",
+            "Lead Score": "={{ $json.lead_score }}",
+            "Lead Tier": "={{ $json.lead_tier }}",
+            "Inputs": "={{ $json.location_record_id }}"
+          },
+          "matchingColumns": [
+            "Google Place ID"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Google Place ID",
+              "displayName": "Google Place ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Restaurant Name",
+              "displayName": "Restaurant Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Full Address",
+              "displayName": "Full Address",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Phone Number",
+              "displayName": "Phone Number",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Google Rating",
+              "displayName": "Google Rating",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Review Count",
+              "displayName": "Review Count",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Longitude",
+              "displayName": "Longitude",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Latitude",
+              "displayName": "Latitude",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Assigned Rep",
+              "displayName": "Assigned Rep",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Rep A (East)",
+                  "value": "Rep A (East)"
+                },
+                {
+                  "name": "Rep B (West)",
+                  "value": "Rep B (West)"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Lead Score",
+              "displayName": "Lead Score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Quality Score",
+              "displayName": "Quality Score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Lead Tier",
+              "displayName": "Lead Tier",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Monitor",
+                  "value": "Monitor"
+                },
+                {
+                  "name": "Qualified",
+                  "value": "Qualified"
+                },
+                {
+                  "name": "Hot Lead",
+                  "value": "Hot Lead"
+                },
+                {
+                  "name": "Review",
+                  "value": "Review"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Decision Maker Name",
+              "displayName": "Decision Maker Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Decision Make Role",
+              "displayName": "Decision Make Role",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Decision Maker Email",
+              "displayName": "Decision Maker Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Social Links",
+              "displayName": "Social Links",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Created At",
+              "displayName": "Created At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Last Updated",
+              "displayName": "Last Updated",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Inputs",
+              "displayName": "Inputs",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        2080,
+        1184
+      ],
+      "id": "ed0a7efd-6d9f-4b6f-8cca-cf51aae70a66",
+      "name": "Upsert Qualified Leads"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "data = _('Filter Invalid Records').all()\n\nresult = []\n\nfor item in data:\n  record = item['json'].to_py()\n  \n  record_id = record['id']\n  complete_record = record['fields']\n  \n  result.append({\n    'location': complete_record['Location'],\n    'status': complete_record['Status'],\n    'min_rating': complete_record['Minimum Rating'],\n    'record_id': record_id,\n  })\n\nreturn result"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2368,
+        1264
+      ],
+      "id": "1e07941c-417e-4827-baa6-02b89c4572dc",
+      "name": "Utility Node -> Get Location Input Data"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "app78Oobw1JRhb0Rh",
+          "mode": "list",
+          "cachedResultName": "Restaurant Lead Generation Base",
+          "cachedResultUrl": "https://airtable.com/app78Oobw1JRhb0Rh"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblrObIWm2ZxUOyoJ",
+          "mode": "list",
+          "cachedResultName": "Inputs",
+          "cachedResultUrl": "https://airtable.com/app78Oobw1JRhb0Rh/tblrObIWm2ZxUOyoJ"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.record_id }}",
+            "Status": "Completed"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Minimum Rating (Stars)",
+              "displayName": "Minimum Rating (Stars)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Completed",
+                  "value": "Completed"
+                },
+                {
+                  "name": "In Progress",
+                  "value": "In Progress"
+                },
+                {
+                  "name": "To Do",
+                  "value": "To Do"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Created At",
+              "displayName": "Created At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Last Updated",
+              "displayName": "Last Updated",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Find Leads",
+              "displayName": "Find Leads",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Minimum Rating",
+              "displayName": "Minimum Rating",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Qualified Leads",
+              "displayName": "Qualified Leads",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Error Logs",
+              "displayName": "Error Logs",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        2576,
+        1264
+      ],
+      "id": "faf76c96-3f84-4dee-8640-4823dc80d8dd",
+      "name": "Update Status -> Completed"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "import json\n\ndata = _('Process Place ID Sequentially').all()\n\nrep_a_leads = []\nrep_b_leads = []\n\nfor item in data:\n\n  record = item['json'].to_py()\n\n  if 'error_msg' not in record:\n\n    if 'lead_tier' in record and record['lead_tier'] in ['Hot Lead', 'Qualified']:\n\n      if record['assigned_rep'] == 'Rep A (East)':\n        rep_a_leads.append(\n          {\n            'Google Place ID': record['place_id'],\n            'Restaurant Name': record['restaurant_name'],\n            'Full Address': record['full_address'],\n            'Phone Number': record['phone_number'],\n            'Wesbite': record['website'],\n            'Google Rating': record['google_rating'],\n            'Review Count': record['review_count'],\n            'Longitude': record['longitude'],\n            'Latitude': record['latitude'],\n            'Assigned Rep': record['assigned_rep'],\n            'Lead Score': record['lead_score'],\n            'Lead Tier': record['lead_tier'],\n            'Inputs': record['location_record_id'],\n            'Location': record['location']\n        })\n  \n      elif record['assignedRep'] == 'Rep B (West)':\n        rep_b_leads.append(\n          {\n            'Google Place ID': record['place_id'],\n            'Restaurant Name': record['restaurant_name'],\n            'Full Address': record['full_address'],\n            'Phone Number': record['phone_number'],\n            'Wesbite': record['website'],\n            'Google Rating': record['google_rating'],\n            'Review Count': record['review_count'],\n            'Longitude': record['longitude'],\n            'Latitude': record['latitude'],\n            'Assigned Rep': record['assigned_rep'],\n            'Lead Score': record['lead_score'],\n            'Lead Tier': record['lead_tier'],\n            'Inputs': record['location_record_id'],\n            'Location': record['location']\n          })\n        \nreturn [{'rep_a_leads': rep_a_leads, 'rep_b_leads': rep_b_leads}]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2784,
+        1264
+      ],
+      "id": "7fd94a0e-ee57-445b-9dac-2fb2ffd7d8a9",
+      "name": "Generate Assigned Rep Leads"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "rep_a_leads = _('Generate Assigned Rep Leads').all()[0]['json'].to_py()['rep_a_leads']\nrep_b_leads = _('Generate Assigned Rep Leads').all()[0]['json'].to_py()['rep_b_leads']\n\noutput_items = []\nconfig_data = _('Set Configurations').all()[0]['json']\n\ndef generate_html_email(leads_list, rep_name, location):\n    \n  sales_ready_leads = [\n    lead for lead in leads_list \n    if lead.get('Lead Tier', '') in ['Qualified', 'Hot Lead']\n  ]\n\n  table_rows_html = \"\"\n\n  if not sales_ready_leads:\n  \n    table_rows_html = f\"<tr><td colspan='5' style='text-align:center;'>No new high-priority leads were found for your region from the '{location}' search.</td></tr>\"\n    \n  else:\n  \n    for lead in sales_ready_leads:\n    \n      table_rows_html += f\"\"\"\n      \n            <tr>\n                <td style=\"padding: 10px; border-bottom: 1px solid #ddd;\">{lead.get('Restaurant Name', 'N/A')}</td>\n                <td style=\"padding: 10px; border-bottom: 1px solid #ddd;\">{lead.get('Lead Tier', 'N/A')}</td>\n                <td style=\"padding: 10px; border-bottom: 1px solid #ddd;\">{lead.get('Full Address', 'N/A')}</td>\n                <td style=\"padding: 10px; border-bottom: 1px solid #ddd;\">{lead.get('Phone Number', 'N/A')}</td>\n                <td style=\"padding: 10px; border-bottom: 1px solid #ddd;\"><a href=\"{lead.get('Website', '#')}\">Visit Website</a></td>\n            </tr>\n            \"\"\"\n    \n\n    return f\"\"\"\n    <!DOCTYPE html>\n    <html>\n    <head>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <style>\n        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; }}\n        .container {{ width: 100%; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 5px; }}\n        .header {{ font-size: 24px; font-weight: bold; color: #333; margin-bottom: 20px; }}\n        .table {{ width: 100%; border-collapse: collapse; }}\n        .table th {{ background-color: #f4f4f4; padding: 10px; text-align: left; border-bottom: 2px solid #ddd; }}\n        .footer {{ font-size: 12px; color: #888; margin-top: 20px; }}\n    </style>\n    </head>\n    <body>\n        <div class=\"container\">\n            <div class=\"header\">🚀 New Leads Assigned from '{location}'</div>\n            <p>Hi {rep_name}, here are the latest sales-ready leads that have been assigned to you:</p>\n            <table class=\"table\">\n                <thead>\n                    <tr>\n                        <th style=\"background-color: #f4f4f4; padding: 10px; text-align: left;\">Restaurant Name</th>\n                        <th style=\"background-color: #f4f4f4; padding: 10px; text-align: left;\">Lead Tier</th>\n                        <th style=\"background-color: #f4f4f4; padding: 10px; text-align: left;\">Address</th>\n                        <th style=\"background-color: #f4f4f4; padding: 10px; text-align: left;\">Phone</th>\n                        <th style=\"background-color: #f4f4f4; padding: 10px; text-align: left;\">Website</th>\n                    </tr>\n                </thead>\n                <tbody>\n                    {table_rows_html}\n                </tbody>\n            </table>\n        </div>\n    </body>\n    </html>\n    \"\"\"\n\n\n\nif rep_a_leads:\n  location_a = rep_a_leads[0].get('Location', 'the latest search')\n  html_a = generate_html_email(rep_a_leads, \"Rep A\", location_a)\n  subject = f'New Leads Assigned: {len(rep_a_leads)} Restaurants in {location_a}'\n  output_items.append({'json': {'rep_name': 'Rep A', 'rep_email': config_data['rep_a_email'],'email_subject': subject,'emailHtml': html_a}})\n\nif rep_b_leads:\n    location_b = rep_b_leads[0].get('Location', 'the latest search')\n    html_b = generate_html_email(rep_b_leads, \"Rep B\", location_b)\n    subject = f'New Leads Assigned: {len(rep_b_leads)} Restaurants in {location_b}'\n    output_items.append({'json': {'rep_name': 'Rep B', 'rep_email': config_data['rep_b_email'],'email_subject': subject,'emailHtml': html_b}})\n\nreturn output_items"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2976,
+        1264
+      ],
+      "id": "ff460889-0337-4fdb-bc68-119199a35d5f",
+      "name": "Generate HTML Template for Email"
+    },
+    {
+      "parameters": {
+        "content": "### **Zone 4: Data Segregation, Output & Notification System**\n\n**Purpose:** This final zone takes all the processed and enriched leads from the main loop and acts as a switchboard. It separates successful leads from errors, writes both to their respective Airtable tables in batches, and notifies the assigned sales reps of their new, high-priority leads.\n\n---\n**Node Descriptions:**\n\n* **Filter Qualified Leads:** (Filter Node) Separates the data stream, allowing only successfully processed leads (those without an `error_msg` key) to pass through.\n* **Filter Error Logs:** (Filter Node) The second path from the split, allowing only failed items (those with an `error_msg` key) to pass through.\n* **Upsert Qualified Leads:** (Airtable Node) Takes all successful leads and batch upserts them into the \"Qualified Leads\" table, creating new records or updating existing ones based on the `Google Place ID`.\n* **Append Error Logs:** (Airtable Node) Takes all failed items and appends them as new rows to the \"Error Logs\" table.\n* **Utility Node -> Get Location Input Data:** Fetches the original input data (like the Record ID) needed to perform the final status update.\n* **Update Status -> Completed:** (Airtable Node) After all processing is finished, this node updates the original record in the \"Inputs\" table to mark its status as \"Completed.\"\n* **Generate Assigned Rep Leads:** (Code Node) Filters the successful leads to find only the Sales Ready tiers (Hot Lead, Qualified) and separates them into lists for each sales rep.\n* **Generate HTML Template for Email:** (Code Node) Creates a unique, formatted HTML email report for each sales rep based on their specific list of new leads.\n* **Notify Assigned Rep:** (Gmail Node) Sends the final, customized HTML email to the appropriate sales representative.",
+        "height": 864,
+        "width": 1632,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1824,
+        704
+      ],
+      "typeVersion": 1,
+      "id": "e02cc2ea-fadc-4243-966d-abaf44c126ea",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "284ff71b-619a-47f0-af3d-eec26bbe7756",
+              "leftValue": "={{ $json.keys().includes('error_msg') }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        1888,
+        1376
+      ],
+      "id": "0fc21e3e-b736-4e21-a280-53402844bd3a",
+      "name": "Filter Error Logs"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "284ff71b-619a-47f0-af3d-eec26bbe7756",
+              "leftValue": "={{ $json.keys().includes('error_msg') }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        1888,
+        1184
+      ],
+      "id": "20180226-626a-4c62-ab52-7262ca3d738a",
+      "name": "Filter Qualified Leads"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.rep_email }}",
+        "subject": "={{ $json.subject }}",
+        "message": "={{ $json.emailHtml }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        3184,
+        1264
+      ],
+      "id": "0fbd1db4-e5c9-48de-92c9-9f7a51b609ac",
+      "name": "Notify Assigned Reps",
+      "webhookId": "34257a2b-c6f8-4e62-aa13-b19bb486502c"
+    },
+    {
+      "parameters": {
+        "content": "                                               🚀 Automated Restaurant Lead Finder\n\n\n**Purpose:** To automate the entire process of finding, qualifying, and delivering high-quality restaurant sales leads to the team.\n\n\n* **1. It Starts in Airtable:** The process begins when you add a new location to search for in our Airtable base.\n* **2. It Finds & Scores Leads:** The workflow then automatically searches for restaurants in that location, gathers key details like their Google rating and website status, and gives each one a \"Lead Score.\"\n* **3. It Delivers to Sales:** The best, \"sales-ready\" leads are automatically assigned to the correct sales rep and sent directly to them in a summary email.",
+        "height": 416,
+        "width": 1248,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        128,
+        272
+      ],
+      "typeVersion": 1,
+      "id": "ab32545d-f77e-40de-a57b-782b729c3c22",
+      "name": "Sticky Note5"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get Configurations": {
+      "main": [
+        [
+          {
+            "node": "Set Configurations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Invalid Records": {
+      "main": [
+        [
+          {
+            "node": "Get Configurations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Configurations": {
+      "main": [
+        [
+          {
+            "node": "Get Location Input Values",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Location Input Values": {
+      "main": [
+        [
+          {
+            "node": "Process Location Sequentially",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable Trigger": {
+      "main": [
+        [
+          {
+            "node": "Filter Invalid Records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Location Sequentially": {
+      "main": [
+        [
+          {
+            "node": "Process Place ID Sequentially",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Places IDs for Location",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Places IDs for Location": {
+      "main": [
+        [
+          {
+            "node": "Update Status -> Processing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Status -> Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Status -> Processing": {
+      "main": [
+        [
+          {
+            "node": "Places ID Response Validation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Status -> Failed": {
+      "main": [
+        [
+          {
+            "node": "Process Location Sequentially",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Places ID Response Validation": {
+      "main": [
+        [
+          {
+            "node": "Prepare Places ID, Location structured data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Places ID, Location structured data": {
+      "main": [
+        [
+          {
+            "node": "Process Location Sequentially",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Place ID Sequentially": {
+      "main": [
+        [
+          {
+            "node": "Filter Qualified Leads",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Filter Error Logs",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait for Places Details Endpoint",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Places Details Endpoint": {
+      "main": [
+        [
+          {
+            "node": "Get Place Details Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Place Details Complete": {
+      "main": [
+        [
+          {
+            "node": "Check if Web URL found",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Parse Error Response Places Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if Web URL found": {
+      "main": [
+        [
+          {
+            "node": "Is Website Operational?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Construct Enriched Structure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Error Response Places Details": {
+      "main": [
+        [
+          {
+            "node": "Save Error Logs Places Details Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Error Logs Places Details Response": {
+      "main": [
+        [
+          {
+            "node": "Process Place ID Sequentially",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Website Operational?": {
+      "main": [
+        [
+          {
+            "node": "Construct Enriched Structure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Construct Enriched Structure": {
+      "main": [
+        [
+          {
+            "node": "Save Structured Restaurant Objects",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Structured Restaurant Objects": {
+      "main": [
+        [
+          {
+            "node": "Process Place ID Sequentially",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append Error Logs ": {
+      "main": [
+        [
+          {
+            "node": "Utility Node -> Get Location Input Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Qualified Leads": {
+      "main": [
+        [
+          {
+            "node": "Utility Node -> Get Location Input Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Utility Node -> Get Location Input Data": {
+      "main": [
+        [
+          {
+            "node": "Update Status -> Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Status -> Completed": {
+      "main": [
+        [
+          {
+            "node": "Generate Assigned Rep Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Assigned Rep Leads": {
+      "main": [
+        [
+          {
+            "node": "Generate HTML Template for Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate HTML Template for Email": {
+      "main": [
+        [
+          {
+            "node": "Notify Assigned Reps",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Error Logs": {
+      "main": [
+        [
+          {
+            "node": "Append Error Logs ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Qualified Leads": {
+      "main": [
+        [
+          {
+            "node": "Upsert Qualified Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "002aedc2-afaf-4bba-b362-8410d0846340",
+  "meta": {
+    "instanceId": "6e7374b38677f95600e36e8c061f468e90ba3bddb90f3787cf513a1af79cacec"
+  },
+  "id": "lkvxuTa7LJupQ5Ga",
+  "tags": []
+}

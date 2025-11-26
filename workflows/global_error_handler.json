@@ -1,0 +1,243 @@
+{
+  "name": "Global Error Handler",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -272,
+        -96
+      ],
+      "id": "f25cb87c-d0f2-474f-8d02-a0312dbca950",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c3518dfd-d705-4e78-8195-7bc88f33a3ac",
+              "name": "workflow_name",
+              "value": "={{ $json.execution.workflow.name }}",
+              "type": "string"
+            },
+            {
+              "id": "0f6ab310-d9a3-473d-aa95-f33139863852",
+              "name": "execution_id",
+              "value": "={{ $json.execution.id }}",
+              "type": "string"
+            },
+            {
+              "id": "4de5067a-a070-4fd0-8907-7e5181db638d",
+              "name": "failed_node",
+              "value": "={{ $json.error.node.name }}",
+              "type": "string"
+            },
+            {
+              "id": "3d4ee6db-29fb-4fd4-8a95-41c433a34255",
+              "name": "error_message",
+              "value": "={{ $json.error.message }}",
+              "type": "string"
+            },
+            {
+              "id": "d45c7caf-f866-4fb3-8b69-b3103e9e6fe6",
+              "name": "note",
+              "value": "={{ $json.error.stack }}",
+              "type": "string"
+            },
+            {
+              "id": "ceeff130-e6a7-4205-8503-9d1c8be0b660",
+              "name": "status_code",
+              "value": "={{ $json.error.httpCode }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -64,
+        -96
+      ],
+      "id": "e4c1ed16-05fa-449a-b4f8-9bfd2f11fd64",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "app78Oobw1JRhb0Rh",
+          "mode": "list",
+          "cachedResultName": "Restaurant Lead Generation Base",
+          "cachedResultUrl": "https://airtable.com/app78Oobw1JRhb0Rh"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblQ9EJxhRWTjpMgF",
+          "mode": "list",
+          "cachedResultName": "Error Logs",
+          "cachedResultUrl": "https://airtable.com/app78Oobw1JRhb0Rh/tblQ9EJxhRWTjpMgF"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Execution ID": "={{ $json.execution_id }}",
+            "Workflow Name": "={{ $json.workflow_name }}",
+            "Failed Node": "={{ $json.failed_node }}",
+            "Error Message": "={{ $json.error_msg }}",
+            "Status Code": "={{ $json.status_code }}",
+            "Note": "={{ $json.note }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Execution ID",
+              "displayName": "Execution ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Workflow Name",
+              "displayName": "Workflow Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Failed Node",
+              "displayName": "Failed Node",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Error Message",
+              "displayName": "Error Message",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status Code",
+              "displayName": "Status Code",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Note",
+              "displayName": "Note",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Created At",
+              "displayName": "Created At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Inputs",
+              "displayName": "Inputs",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        144,
+        -96
+      ],
+      "id": "964f7dc6-5632-483b-ae3a-553464489e0a",
+      "name": "Create a record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "3nfET1dNbWLXVCwt",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Create a record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "331ca559-8f4d-43aa-a25d-51bdfdc23775",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "201b2d67ab534255ffc43cdf5334b25117f5f08851e46381c42e1073a7ab9ca7"
+  },
+  "id": "ysJArBdzZVwIzhft",
+  "tags": []
+}
