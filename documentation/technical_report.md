@@ -83,17 +83,17 @@ Airtable was selected as the definitive backend due to its relational database c
 
 * **Qualified Leads Table (Mini-CRM):** The central repository for enriched data. It uses the Google Place ID as a primary key to handle upsert logic (updating existing records rather than duplicating).
 
-[Figure 2: The Enriched Data Output](assets/qualified_leads_table.png)
+![Figure 2: The Enriched Data Output](../assets/qualified_leads_table.png)
 *Figure 2: The Enriched Data Output. Features the calculated "Lead Score" (0-100) and the assigned "Lead Tier." Note the use of "Single Select" fields for status management.*
 
 * **Error Logs Table (Monitoring Dashboard):** Provides a transparent, real-time log of failures, capturing timestamps, failed nodes, and specific error messages.
 
-[Figure 3: Centralized Observability](assets/error_logs_table.png)
+![Figure 3: Centralized Observability](../assets/error_logs_table.png)
 *Figure 3: Centralized Observability. Captures the exact "Failed Node" and "Error Message" from the Global Error Handler for rapid debugging.*
 
 * **Configurations Table (Global Variables):** To ensure maintainability, all environment variables are stored here.
 
-[Figure 4: Dynamic Configuration](assets/configs_table.png)
+![Figure 4: Dynamic Configuration](../assets/configs_table.png)
 *Figure 4: Dynamic Configuration. Stores Sales Rep Emails, Rate Limits, and View URLs, allowing non-technical users to update logic directly from the UI.*
 
 ---
