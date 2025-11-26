@@ -41,7 +41,7 @@ The following R&D steps were taken to address this:
 With the focus shifted from *who* (decision-makers) to *what* (highest quality leads), the sourcing strategy was re-evaluated.
 
 * **Initial Approach (Overpass API):** The first iteration utilized the OpenStreetMap Overpass API. While free, the data proved unreliable—frequently outdated or missing critical fields like website and operational status.
-* **Strategic Trade-Off (Google Places API):** A decisive pivot was made to the Google Places API. Although a premium service, the $200 monthly free credit offered by GCP was sufficient for the POC. This provided consistently accurate, real-time data including verified business status, ratings, and review counts—metrics essential for the scoring engine.
+* **Strategic Trade-Off (Google Places API):** A decisive pivot was made to the Google Places API. Although a premium service, the $300 monthly free credit offered by GCP was sufficient for the POC. This provided consistently accurate, real-time data including verified business status, ratings, and review counts—metrics essential for the scoring engine.
 
 ---
 
