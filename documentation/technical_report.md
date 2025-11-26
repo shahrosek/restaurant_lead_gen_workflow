@@ -78,7 +78,7 @@ Airtable was selected as the definitive backend due to its relational database c
 
 * **Inputs Table (Control Panel):** This table is where the sales team initiates requests. Adding a new location with a "To Do" status and checking the "Find Leads" box triggers the workflow.
 
-[Figure 1: The Input Trigger](assets/inputs_table.png)
+![Figure 1: The Input Trigger](../assets/inputs_table.png)
 *Figure 1: The Input Trigger. The entry point for the workflow. Sales representatives simply input a location and check the "Find Leads" box to start the automation.*
 
 * **Qualified Leads Table (Mini-CRM):** The central repository for enriched data. It uses the Google Place ID as a primary key to handle upsert logic (updating existing records rather than duplicating).
